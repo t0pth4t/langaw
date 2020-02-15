@@ -28,6 +28,13 @@ void main() async {
     'flies/macho-fly-1.png',
     'flies/macho-fly-2.png',
     'flies/macho-fly-dead.png',
+    'bg/lose-splash.png',
+    'branding/title.png',
+    'ui/dialog-credits.png',
+    'ui/dialog-help.png',
+    'ui/icon-credits.png',
+    'ui/icon-help.png',
+    'ui/start-button.png',
   ]);
   LangawGame game = LangawGame();
   TapGestureRecognizer tapper = TapGestureRecognizer();
