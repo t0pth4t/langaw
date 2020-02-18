@@ -12,6 +12,7 @@ import 'package:langaw/components/help-button.dart';
 import 'package:langaw/components/house-fly.dart';
 import 'package:langaw/components/hungry-fly.dart';
 import 'package:langaw/components/macho-fly.dart';
+import 'package:langaw/components/score-display.dart';
 import 'package:langaw/components/start-button.dart';
 import 'package:langaw/controllers/spawner.dart';
 import 'package:langaw/view.dart';
@@ -25,7 +26,9 @@ class LangawGame extends Game {
   double tileSize;
   List<Fly> flies;
   Random rnd;
+  int score;
   Backyard background;
+  ScoreDisplay scoreDisplay;
 
   View activeView = View.home;
   HomeView homeView;
@@ -46,7 +49,10 @@ class LangawGame extends Game {
   void init() async {
     flies = List<Fly>();
     rnd = Random();
+    score = 0;
     resize(await Flame.util.initialDimensions());
+
+    scoreDisplay = ScoreDisplay(this);
 
     startButton = StartButton(this);
     helpButton = HelpButton(this);
@@ -85,6 +91,10 @@ class LangawGame extends Game {
 
   void render(Canvas canvas) {
     background.render(canvas);
+    if (activeView == View.playing){
+      scoreDisplay.render(canvas);
+    }
+
     if (activeView == View.home) {
       homeView.render(canvas);
     }
@@ -116,6 +126,9 @@ class LangawGame extends Game {
     }
     spawner.update(t);
 
+    if (activeView == View.playing) {
+      scoreDisplay.update(t);
+    }
     flies.forEach((Fly fly) => fly.update(t));
     flies.removeWhere((Fly fly) => fly.isOffScreen);
   }
