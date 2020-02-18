@@ -9,10 +9,13 @@ import 'package:langaw/components/drooler-fly.dart';
 import 'package:langaw/components/fly.dart';
 import 'package:flutter/gestures.dart';
 import 'package:langaw/components/help-button.dart';
+import 'package:langaw/components/highscore-display.dart';
 import 'package:langaw/components/house-fly.dart';
 import 'package:langaw/components/hungry-fly.dart';
 import 'package:langaw/components/macho-fly.dart';
+import 'package:langaw/components/music-button.dart';
 import 'package:langaw/components/score-display.dart';
+import 'package:langaw/components/sound-button.dart';
 import 'package:langaw/components/start-button.dart';
 import 'package:langaw/controllers/spawner.dart';
 import 'package:langaw/view.dart';
@@ -20,8 +23,12 @@ import 'package:langaw/views/credits-view.dart';
 import 'package:langaw/views/help-view.dart';
 import 'package:langaw/views/home-view.dart';
 import 'package:langaw/views/lost-view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class LangawGame extends Game {
+  final SharedPreferences storage;
+
   Size screenSize;
   double tileSize;
   List<Fly> flies;
@@ -29,6 +36,7 @@ class LangawGame extends Game {
   int score;
   Backyard background;
   ScoreDisplay scoreDisplay;
+  HighscoreDisplay highscoreDisplay;
 
   View activeView = View.home;
   HomeView homeView;
@@ -41,22 +49,37 @@ class LangawGame extends Game {
   StartButton startButton;
   HelpButton helpButton;
   CreditsButton creditsButton;
+  MusicButton musicButton;
+  SoundButton soundButton;
 
-  LangawGame() {
+  AudioPlayer homeBGM;
+  AudioPlayer playingBGM;
+
+  LangawGame(this.storage) {
     init();
   }
 
   void init() async {
+    homeBGM = await Flame.audio.loopLongAudio('bgm/home.mp3', volume: .25);
+    homeBGM.pause();
+    playingBGM = await Flame.audio.loopLongAudio('bgm/playing.mp3', volume: .25);
+    playingBGM.pause();
+
+    playHomeBGM();
     flies = List<Fly>();
     rnd = Random();
     score = 0;
     resize(await Flame.util.initialDimensions());
 
     scoreDisplay = ScoreDisplay(this);
+    highscoreDisplay = HighscoreDisplay(this);
 
     startButton = StartButton(this);
     helpButton = HelpButton(this);
     creditsButton = CreditsButton(this);
+    musicButton = MusicButton(this);
+    soundButton = SoundButton(this);
+
 
     background = Backyard(this);
     homeView = HomeView(this);
@@ -65,6 +88,18 @@ class LangawGame extends Game {
     creditsView = CreditsView(this);
 
     spawner = FlySpawner(this);
+  }
+
+  void playHomeBGM() {
+    playingBGM.pause();
+    playingBGM.seek(Duration.zero);
+    homeBGM.resume();
+  }
+
+  void playPlayingBGM() {
+    homeBGM.pause();
+    homeBGM.seek(Duration.zero);
+    playingBGM.resume();
   }
 
   void spawnFly() {
@@ -91,6 +126,8 @@ class LangawGame extends Game {
 
   void render(Canvas canvas) {
     background.render(canvas);
+    highscoreDisplay.render(canvas);
+
     if (activeView == View.playing){
       scoreDisplay.render(canvas);
     }
@@ -114,10 +151,13 @@ class LangawGame extends Game {
       startButton.render(canvas);
       helpButton.render(canvas);
       creditsButton.render(canvas);
+
     }
     if (flies != null && flies.length > 0) {
       flies.forEach((Fly fly) => fly.render(canvas));
     }
+    musicButton.render(canvas);
+    soundButton.render(canvas);
   }
 
   void update(double t) {
@@ -163,6 +203,18 @@ class LangawGame extends Game {
       }
     }
 
+    // music button
+    if (!isHandled && musicButton.rect.contains(d.globalPosition)) {
+      musicButton.onTapDown();
+      isHandled = true;
+    }
+
+    // sound button
+    if (!isHandled && soundButton.rect.contains(d.globalPosition)) {
+      soundButton.onTapDown();
+      isHandled = true;
+    }
+
     if (!isHandled) {
       if (activeView == View.help || activeView == View.credits) {
         activeView = View.home;
@@ -181,6 +233,10 @@ class LangawGame extends Game {
       });
 
       if (activeView == View.playing && !didHitAFly) {
+        if (soundButton.isEnabled) {
+          Flame.audio.play('sfx/haha' + (rnd.nextInt(5) + 1).toString() + '.ogg');
+        }
+        playHomeBGM();
         activeView = View.lost;
       }
     }
