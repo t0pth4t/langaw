@@ -15,30 +15,34 @@ class Fly {
   bool isOffScreen = false;
   Offset targetLocation;
   Callout callout;
+
   double get speed => game.tileSize * 3;
 
   final LangawGame game;
-  Fly(this.game){
+
+  Fly(this.game) {
     setTargetLocation();
     callout = Callout(this);
-
   }
 
   void setTargetLocation() {
-    double x = game.rnd.nextDouble() * (game.screenSize.width - (game.tileSize * 2.025));
-    double y = game.rnd.nextDouble() * (game.screenSize.height - (game.tileSize * 2.025));
+    double x = game.rnd.nextDouble() *
+        (game.screenSize.width - (game.tileSize * 1.35));
+    double y = (game.rnd.nextDouble() *
+            (game.screenSize.height - (game.tileSize * 2.85))) +
+        (game.tileSize * 1.5);
     targetLocation = Offset(x, y);
   }
 
   void render(Canvas c) {
-    if(isDead){
-      deadSprite.renderRect(c, flyRect.inflate(2));
-      return;
-    }
-
-    flyingSprite[flyingSpriteIndex.toInt()].renderRect(c, flyRect.inflate(2));
-    if (game.activeView == View.playing) {
-      callout.render(c);
+    if (isDead) {
+      deadSprite.renderRect(c, flyRect.inflate(flyRect.width / 2));
+    } else {
+      flyingSprite[flyingSpriteIndex.toInt()]
+          .renderRect(c, flyRect.inflate(flyRect.width / 2));
+      if (game.activeView == View.playing) {
+        callout.render(c);
+      }
     }
   }
 
@@ -53,7 +57,7 @@ class Fly {
     }
     //flap the wings
     flyingSpriteIndex += 30 * t;
-    if (flyingSpriteIndex >= 2) {
+    while (flyingSpriteIndex >= 2) {
       flyingSpriteIndex -= 2;
     }
 
@@ -61,7 +65,8 @@ class Fly {
     double stepDistance = speed * t;
     Offset toTarget = targetLocation - Offset(flyRect.left, flyRect.top);
     if (stepDistance < toTarget.distance) {
-      Offset stepToTarget = Offset.fromDirection(toTarget.direction, stepDistance);
+      Offset stepToTarget =
+          Offset.fromDirection(toTarget.direction, stepDistance);
       flyRect = flyRect.shift(stepToTarget);
     } else {
       flyRect = flyRect.shift(toTarget);
@@ -69,13 +74,13 @@ class Fly {
     }
 
     callout.update(t);
-
   }
 
-  void onTapDown(){
+  void onTapDown() {
     if (!isDead) {
       if (game.soundButton.isEnabled) {
-        Flame.audio.play('sfx/ouch' + (game.rnd.nextInt(11) + 1).toString() + '.ogg');
+        Flame.audio
+            .play('sfx/ouch' + (game.rnd.nextInt(11) + 1).toString() + '.ogg');
       }
 
       isDead = true;
